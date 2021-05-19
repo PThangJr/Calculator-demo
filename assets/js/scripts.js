@@ -139,7 +139,11 @@ class Calculator {
   appendNumber(number) {
     // console.log(this.currentOperand);
     // this.previousCalculation;
-    if (number === "+/-" && !!parseFloat(this.currentOperand)) {
+    if (
+      number === "+/-" &&
+      !!parseFloat(this.currentOperand) &&
+      !this.isCompleteCompute
+    ) {
       // console.log(this.currentOperand, this.count);
 
       this.count += 1;
