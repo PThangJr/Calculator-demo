@@ -158,10 +158,8 @@ class Calculator {
       if (this.count % 2 === 1) {
         // console.log("Negative");
         this.currentOperand = `-${this.currentOperand.toString()}`;
-        console.log(this.currentOperand);
       } else {
         // console.log("Positive");
-        console.log(this.currentOperand);
         this.currentOperand.includes("-")
           ? (this.currentOperand = this.currentOperand.slice(1))
           : (this.currentOperand = this.currentOperand);
@@ -272,12 +270,12 @@ class Calculator {
   //Cập nhật hiển thị giá trị của các số
   updateDisplay() {
     // console.log("updating...", this.currentOperand);
-    console.log(
-      this.currentCalculation,
-      this.previousOperand,
-      this.currentOperand,
-      this.operation
-    );
+    // console.log(
+    //   this.currentCalculation,
+    //   this.previousOperand,
+    //   this.currentOperand,
+    //   this.operation
+    // );
     if (!this.currentOperand) {
       this.currentOperandTextElem.innerText = this.formatNumber(
         this.currentCalculation
