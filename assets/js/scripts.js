@@ -98,6 +98,10 @@ class Calculator {
         case "Delete":
           this.delete();
           break;
+        case " ":
+          this.clearCurrent();
+
+          break;
         case "Escape":
           this.clear();
           break;
@@ -124,6 +128,8 @@ class Calculator {
   clearCurrent() {
     if (this.isCompleteCompute) {
       this.previousCalculation = "";
+      this.currentCalculation = "";
+      this.isCompleteCompute = false;
     }
     this.currentOperand = "0";
     this.count = 0;
