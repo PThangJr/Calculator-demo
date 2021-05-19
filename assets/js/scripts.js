@@ -6,6 +6,7 @@ const operationButtons = $$("button[data-operation]");
 const equalButton = $("button[data-equal]");
 const deleteButton = $("button[data-delete]");
 const allClearButton = $("button[data-all-clear]");
+const currentClearButton = $("button[data-current-clear]");
 const previousOperandTextElem = $("[data-previous-operand]");
 const currentOperandTextElem = $("[data-current-operand]");
 class Calculator {
@@ -19,6 +20,7 @@ class Calculator {
         equalButton,
         deleteButton,
         allClearButton,
+        currentClearButton,
       } = options;
     }
     this.currentOperandTextElem =
@@ -30,7 +32,13 @@ class Calculator {
     this.equalButton = equalButton || $("button[data-equal]");
     this.deleteButton = deleteButton || $("button[data-delete]");
     this.allClearButton = allClearButton || $("button[data-all-clear]");
+    this.currentClearButton =
+      currentClearButton || $("button[data-current-clear]");
     this.isCompleteCompute = false;
+    this.isNegative = false;
+    this.count = 0;
+    this.previousCalculation = "";
+    this.currentCalculation = "";
     this.clear();
     this.start();
   }
@@ -44,16 +52,20 @@ class Calculator {
     this.operationButtons.forEach((operationBtn) => {
       operationBtn.addEventListener("click", () => {
         this.chooseOperation(operationBtn.innerText);
+        this.compute(false);
       });
     });
     this.equalButton.addEventListener("click", () => {
-      this.compute();
+      this.compute(true);
     });
     this.allClearButton.addEventListener("click", () => {
       this.clear();
     });
     this.deleteButton.addEventListener("click", () => {
       this.delete();
+    });
+    this.currentClearButton.addEventListener("click", () => {
+      this.clearCurrent();
     });
     this.handleKeyDown();
   }
@@ -69,13 +81,18 @@ class Calculator {
         case "*":
         case "/":
           this.isCompleteCompute = false;
-          this.chooseOperation(e.key);
+          const keyOperation = e.key === "/" ? "÷" : e.key;
+          this.chooseOperation(keyOperation);
+          this.compute(false);
+          break;
+        case "`":
+          this.appendNumber("+/-");
           break;
         case ".":
           this.appendNumber(e.key);
           break;
         case "Enter":
-          this.compute();
+          this.compute(true);
           break;
         case "Backspace":
         case "Delete":
@@ -97,6 +114,19 @@ class Calculator {
     this.previousOperand = ""; // Giá trị trước khi thực hiện phép tính
     this.currentOperand = "0"; // Giá trị hiện tại
     this.operation = undefined; // Phép tính
+    this.previousCalculation = "";
+    this.currentCalculation = "";
+    this.isCompleteCompute = false;
+    this.count = 0;
+    this.updateDisplay();
+  }
+  //Hàm xóa giá trị hiện tại khi đang thực hiện phép tính
+  clearCurrent() {
+    if (this.isCompleteCompute) {
+      this.previousCalculation = "";
+    }
+    this.currentOperand = "0";
+    this.count = 0;
     this.updateDisplay();
   }
   // Hàm xóa 1 phần tử cuối
@@ -107,32 +137,65 @@ class Calculator {
   }
   //Hàm nhập số
   appendNumber(number) {
-    // console.log(number);
-    if (this.isCompleteCompute && !this.operation) {
-      this.clear();
-      this.isCompleteCompute = false;
+    // console.log(this.currentOperand);
+    // this.previousCalculation;
+    if (number === "+/-" && !!parseFloat(this.currentOperand)) {
+      // console.log(this.currentOperand, this.count);
+
+      this.count += 1;
+      this.isNegative = true;
+      // console.log(this.currentOperand);
+      if (this.count % 2 === 1) {
+        // console.log("Negative");
+        this.currentOperand = `-${this.currentOperand.toString()}`;
+        console.log(this.currentOperand);
+      } else {
+        // console.log("Positive");
+        console.log(this.currentOperand);
+        this.currentOperand.includes("-")
+          ? (this.currentOperand = this.currentOperand.slice(1))
+          : (this.currentOperand = this.currentOperand);
+      }
       if (number === "." && this.currentOperand.includes(".")) return;
-      this.currentOperand = this.currentOperand.toString() + number;
+      this.currentOperand = this.currentOperand.toString();
       this.updateDisplay();
-    } else {
+    } else if (number !== "+/-") {
+      if (this.isCompleteCompute && !this.operation) {
+        this.clear();
+        this.isCompleteCompute = false;
+        this.isNegative = false;
+      }
       if (number === "." && this.currentOperand.includes(".")) return;
       this.currentOperand = this.currentOperand.toString() + number;
+      // console.log(this.currentOperand);
+      if (/^0+[1-9]+/.test(this.currentOperand)) {
+        this.currentOperand = this.currentOperand.replace(/^0+/, "");
+      }
       this.updateDisplay();
     }
   }
   // Hàm chọn phép tính
   chooseOperation(operation) {
-    if (this.currentOperand === "") return;
+    this.count = 0;
+    // if (this.currentOperand === "") {
+    //   console.log(operation);
+    //   // this.operation = this.operation;
+    // }
     if (this.previousOperand !== "") {
-      this.compute();
+      this.compute(false);
     }
-    this.previousOperand = this.deleteZerosNumberEnd(this.currentOperand);
+    this.previousOperand = this.operation
+      ? this.previousOperand
+      : this.deleteZerosNumberEnd(this.currentOperand);
+
     this.operation = operation;
-    this.currentOperand = "";
+    if (this.operation) {
+      this.currentOperand = "";
+    }
     this.updateDisplay();
   }
   //Hàm tính toán
-  compute() {
+  compute(isCompleteCompute) {
     // console.log("computing...");
     let result;
     const prevNumber = parseFloat(this.previousOperand);
@@ -151,17 +214,25 @@ class Calculator {
         result = prevNumber * currentNumber;
         break;
       case "/":
+      case "÷":
         result = prevNumber / currentNumber;
         break;
       default:
         return;
     }
+    if (!this.previousCalculation) {
+      this.previousCalculation += `${this.previousOperand} ${this.operation} ${this.currentOperand}`;
+    } else {
+      this.previousCalculation += ` ${this.operation} ${this.currentOperand}`;
+    }
     this.currentOperand = result;
+    this.currentCalculation = result;
     this.previousOperand = "";
     this.operation = undefined;
+    this.isCompleteCompute = isCompleteCompute;
     this.updateDisplay();
-    this.isCompleteCompute = true;
   }
+
   // Format định dạng số 1000 => 1,000 || 100000 => 100,000
   formatNumber(number) {
     const stringNumber = number.toString();
@@ -176,12 +247,6 @@ class Calculator {
       });
     }
     if (decimalDigits != null) {
-      //   const isHaveZeroNumberEnd = /0+$/.test(decimalDigits);
-      //   console.log(isHaveZeroNumberEnd);
-      //   if (isHaveZeroNumberEnd) {
-      //     decimalDigits.replace(/0+$/, "");
-      //   }
-      //   console.log(decimalDigits);
       return `${result}.${decimalDigits}`;
     } else {
       return result;
@@ -189,25 +254,50 @@ class Calculator {
   }
   //Xóa số 0 ở cuối nếu số đó là số thập phân
   deleteZerosNumberEnd(number) {
-    if (/\.0+$/.test(number)) {
-      return number.replace(/\.0+$/, "");
+    if (/^\d+\.\d*0+$/.test(number)) {
+      return number.replace(/0+$/, "");
     }
     return number;
   }
   //Cập nhật hiển thị giá trị của các số
   updateDisplay() {
     // console.log("updating...", this.currentOperand);
-    this.currentOperandTextElem.innerText = this.formatNumber(
-      this.currentOperand
+    console.log(
+      this.currentCalculation,
+      this.previousOperand,
+      this.currentOperand,
+      this.operation
     );
-    if (this.operation) {
-      this.previousOperandTextElem.innerText = `${this.formatNumber(
-        this.previousOperand
-      )} ${this.operation}`;
-    } else {
-      this.previousOperandTextElem.innerText = this.formatNumber(
-        this.previousOperand
+    if (!this.currentOperand) {
+      this.currentOperandTextElem.innerText = this.formatNumber(
+        this.currentCalculation
       );
+    } else {
+      if (this.isCompleteCompute) {
+        this.currentOperandTextElem.innerText = `= ${this.formatNumber(
+          this.currentOperand
+        )}`;
+      } else {
+        this.currentOperandTextElem.innerText = `${this.formatNumber(
+          this.currentOperand
+        )}`;
+      }
+    }
+
+    if (this.previousCalculation) {
+      this.previousOperandTextElem.innerText = `${this.previousCalculation} ${
+        this.operation ? this.operation : ""
+      }`;
+    } else {
+      if (this.operation) {
+        this.previousOperandTextElem.innerText = `${this.formatNumber(
+          this.previousOperand
+        )} ${this.operation}`;
+      } else {
+        this.previousOperandTextElem.innerText = this.formatNumber(
+          this.previousOperand
+        );
+      }
     }
   }
 }
