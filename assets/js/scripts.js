@@ -194,7 +194,7 @@ class Calculator {
     }
     this.previousOperand = this.operation
       ? this.previousOperand
-      : this.deleteZerosNumberEnd(this.currentOperand);
+      : this.currentOperand;
 
     this.operation = operation;
     if (this.operation) {
@@ -229,9 +229,13 @@ class Calculator {
         return;
     }
     if (!this.previousCalculation) {
-      this.previousCalculation += `${this.previousOperand} ${this.operation} ${this.currentOperand}`;
+      this.previousCalculation += `${parseFloat(this.previousOperand)} ${
+        this.operation
+      } ${parseFloat(this.currentOperand)}`;
     } else {
-      this.previousCalculation += ` ${this.operation} ${this.currentOperand}`;
+      this.previousCalculation += ` ${this.operation} ${parseFloat(
+        this.currentOperand
+      )}`;
     }
     this.currentOperand = result;
     this.currentCalculation = result;
@@ -259,13 +263,6 @@ class Calculator {
     } else {
       return result;
     }
-  }
-  //Xóa số 0 ở cuối nếu số đó là số thập phân
-  deleteZerosNumberEnd(number) {
-    if (/^\d+\.\d*0+$/.test(number)) {
-      return number.replace(/0+$/, "");
-    }
-    return number;
   }
   //Cập nhật hiển thị giá trị của các số
   updateDisplay() {
@@ -298,8 +295,8 @@ class Calculator {
       }`;
     } else {
       if (this.operation) {
-        this.previousOperandTextElem.innerText = `${this.formatNumber(
-          this.previousOperand
+        this.previousOperandTextElem.innerText = `${parseFloat(
+          this.formatNumber(this.previousOperand)
         )} ${this.operation}`;
       } else {
         this.previousOperandTextElem.innerText = this.formatNumber(
